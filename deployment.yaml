@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twilio-autobots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twilio-autobots
+  template:
+    metadata:
+      labels:
+        app: twilio-autobots
+    spec:
+      containers:
+      - name: twilio-autobots
+        image: twilio-autobots-go
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080

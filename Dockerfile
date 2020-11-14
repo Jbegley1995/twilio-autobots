@@ -1,5 +1,5 @@
 FROM golang:alpine AS builder
-RUN apk add git
+
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=auto \
     CGO_ENABLED=0 \
@@ -15,7 +15,9 @@ COPY go.sum .
 RUN go mod download
 
 # Copy the code into the container
-COPY ./src .
+COPY . .
+
+WORKDIR /build/src
 
 # Build the application
 RUN go build -o main .
@@ -27,7 +29,7 @@ RUN go test ./...
 WORKDIR /dist
 
 # Copy binary from build to main folder
-RUN cp /build/main .
+RUN cp /build/src/main .
 
 # Build a small image
 FROM scratch
