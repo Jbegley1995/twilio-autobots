@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jbegley1995/twilio-autobots/src/services"
+	"github.com/jbegley1995/twilio-autobots/server/services"
 )
 
 //Build builds out all of the API controllers for search.
@@ -27,7 +27,7 @@ func GetStarsByOrigin(c *gin.Context) {
 		repo, err := service.GetByOrigin(origin)
 		if err != nil {
 			fmt.Println(err)
-			return
+			continue
 		}
 
 		stars[*repo.Name] = *repo.StargazersCount

@@ -17,7 +17,7 @@ RUN go mod download
 # Copy the code into the container
 COPY . .
 
-WORKDIR /build/src
+WORKDIR /build/server
 
 # Build the application
 RUN go build -o main .
@@ -29,10 +29,17 @@ RUN go test ./...
 WORKDIR /dist
 
 # Copy binary from build to main folder
-RUN cp /build/src/main .
+RUN cp /build/server/main .
 
 # Build a small image
-FROM scratch
+FROM alpine
+
+# Update certificates - certain services won't relay information properly if these aren't set
+RUN apk update \
+        && apk upgrade \
+        && apk add --no-cache \
+        ca-certificates \
+        && update-ca-certificates
 
 COPY --from=builder /dist/main /
 

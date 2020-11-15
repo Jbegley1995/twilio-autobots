@@ -13,11 +13,7 @@ spec:
         app: twilio-autobots
     spec:
       containers:
-      - name: twilio-autobots
-        image: twilio-autobots-go
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
+      - name: twilio-autobots-container
+        image: jesrbegl/twilio-autobots
         ports:
         - containerPort: 8080
