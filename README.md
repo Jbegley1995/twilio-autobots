@@ -80,8 +80,7 @@ go test ./...
 
 ## Server
 - [x] Dockerized Your code must be able to automatically generate a docker image
-- [x] README Your README must include clear instructions on how to run the
-- [x] Server as a docker container
+- [x] README Your README must include clear instructions on how to run the server as a docker container
 - [x] Error Handling Your server must pass meaningful errors on to the client
 - [x] Tests Your server must include tests and instructions on how to run your tests
 - [x] Calls GitHub Your server must query GitHub’s API for a given list of GitHub repository origins (strings in the form of “organization/repository”) and return the number of stars on those repositories.

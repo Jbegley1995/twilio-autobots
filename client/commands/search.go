@@ -16,7 +16,7 @@ import (
 
 const (
 	host      string = "http://localhost"
-	port      string = "57865"
+	port      string = "8080"
 	subdomain string = "api/v1/search"
 
 	// OriginsFlag is a flag that can be used to interact with the CLI when using the search functionality.
