@@ -1,7 +1,6 @@
 package search
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,20 +17,21 @@ func Build(router *gin.RouterGroup) {
 //GetStarsByOrigin searches github for a repo and returns the stars.
 func GetStarsByOrigin(c *gin.Context) {
 	var (
-		query = c.Request.URL.Query()
+		query  = c.Request.URL.Query()
+		stars  = map[string]int{}
+		errors = map[string]string{}
 	)
 
 	service := services.Github()
-	var stars = map[string]int{}
 	for _, origin := range query["origin"] {
 		repo, err := service.GetByOrigin(origin)
 		if err != nil {
-			fmt.Println(err)
+			errors[origin] = err.Error()
 			continue
 		}
 
 		stars[*repo.Name] = *repo.StargazersCount
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": stars})
+	c.JSON(http.StatusOK, gin.H{"data": stars, "errors": errors})
 }

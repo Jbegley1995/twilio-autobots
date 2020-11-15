@@ -45,8 +45,8 @@ func splitOrigin(repositoryOrigin string) (*origin, error) {
 		return nil, RepositoryIncorrectFormatError
 	}
 	return &origin{
-		Organization: repoInformation[0],
-		Repository:   repoInformation[1],
+		Organization: strings.Trim(repoInformation[0], ""),
+		Repository:   strings.Trim(repoInformation[1], ""),
 	}, nil
 }
 
