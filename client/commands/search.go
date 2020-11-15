@@ -144,7 +144,7 @@ func searchCommandAction(c *cli.Context) error {
 		fmt.Printf("[✓] %v currently has %v stars\n", repo, stars)
 	}
 	for repo, information := range searchResponse.Errors {
-		fmt.Printf("[x] Stars couldn't be retrieved correctly for %v: %v", repo, information)
+		fmt.Printf("[x] Stars couldn't be retrieved correctly for %v: %v\n", repo, information)
 	}
 
 	return nil
