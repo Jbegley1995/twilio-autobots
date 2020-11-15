@@ -1,11 +1,13 @@
 package commands
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -13,12 +15,20 @@ import (
 )
 
 const (
-	ORIGINS_FLAG          string = "origins"
-	ORIGIN_PARAMETER_NAME string = "origin"
+	host      string = "http://localhost"
+	port      string = "57865"
+	subdomain string = "api/v1/search"
+
+	// OriginsFlag is a flag that can be used to interact with the CLI when using the search functionality.
+	OriginsFlag string = "origin"
+	// OriginsFileFlag is a flag that can be used to interact with the CLI via a file when using the search functionality.
+	OriginsFileFlag string = "origin-file"
+	// OriginParameterName is the parameter that needs to be passed to the API.
+	OriginParameterName string = "origin"
 )
 
 var (
-	SearchNoOriginsError             error = errors.Errorf("Origins aren't being passed, please make sure you are passing origins. Use the flag \"%v\"", ORIGINS_FLAG)
+	SearchNoOriginsError             error = errors.Errorf("Origins aren't being passed, please make sure you are passing origins. Use the flag \"%v\"", OriginsFlag)
 	OriginIncorrectFormatError       error = errors.New("Origin is not passed in the correct format, please make sure to format as \"organization/repository\"")
 	OrganizationIncorrectFormatError error = errors.New("Organization is empty, please make sure organization is being passed")
 	RepositoryIncorrectFormatError   error = errors.New("Repository is empty, please make sure repository is being passed")
@@ -34,8 +44,12 @@ type SearchResponse struct {
 func SearchCommand() cli.Command {
 	myFlags := []cli.Flag{
 		cli.StringSliceFlag{
-			Name:  ORIGINS_FLAG,
-			Value: &cli.StringSlice{},
+			Name:  OriginsFlag,
+			Usage: "A GitHub repository origin string in the form of \"organization/repository\"",
+		},
+		cli.StringFlag{
+			Name:  OriginsFileFlag,
+			Usage: "A path to a file, which contains a list of GitHub repository origin string in the form of \"organization/repository\". Each origin will be picked up on a new line.",
 		},
 	}
 
@@ -62,8 +76,45 @@ func validateOrigin(repositoryOrigin string) error {
 	return nil
 }
 
+// searchReadFilesFromOriginFile opens up a file at the origin (or returns empty if there is none), and returns a list of origin strings.
+func searchReadFilesFromOriginFile(originFile string) ([]string, error) {
+	var (
+		origins = []string{}
+	)
+	if len(originFile) == 0 {
+		return origins, nil
+	}
+
+	file, err := os.Open(originFile)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		origins = append(origins, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return origins, nil
+}
+
+// searchCommandAction performs search functionality based on the origins passed. This will call the autobots API, in order to retrieve information from github.
 func searchCommandAction(c *cli.Context) error {
-	originsInput := c.StringSlice(ORIGINS_FLAG)
+	originsInput := c.StringSlice(OriginsFlag)
+
+	inputFromFile, err := searchReadFilesFromOriginFile(c.String(OriginsFileFlag))
+	if err != nil {
+		return err
+	}
+	if len(inputFromFile) > 0 {
+		originsInput = append(originsInput, inputFromFile...)
+	}
+
 	if len(originsInput) == 0 {
 		return SearchNoOriginsError
 	}
@@ -73,10 +124,12 @@ func searchCommandAction(c *cli.Context) error {
 		if err := validateOrigin(origin); err != nil {
 			return err
 		}
-		urlValues.Add(ORIGIN_PARAMETER_NAME, origin)
+		urlValues.Add(OriginParameterName, origin)
 	}
 
-	resp, err := http.Get("http://localhost:8080/api/v1/search?" + urlValues.Encode())
+	// TODO: The way this url / request is working would be abstracted out and configurable.
+	var url = fmt.Sprintf("%v:%v/%v?%v", host, port, subdomain, urlValues.Encode())
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -88,10 +141,10 @@ func searchCommandAction(c *cli.Context) error {
 	}
 
 	for repo, stars := range searchResponse.Data {
-		fmt.Printf("%v currently has %v stars\n", repo, stars)
+		fmt.Printf("[✓] %v currently has %v stars\n", repo, stars)
 	}
 	for repo, information := range searchResponse.Errors {
-		fmt.Printf("Stars couldn't be retrieved correctly for %v: %v", repo, information)
+		fmt.Printf("[x] Stars couldn't be retrieved correctly for %v: %v", repo, information)
 	}
 
 	return nil
